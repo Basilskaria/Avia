@@ -15,8 +15,8 @@ public class FobService {
     public static UUID serviceUUID = UUID.fromString(Constants.Fob_Service_UUID);
     public static UUID buttonCharaUUID = UUID.fromString(Constants.Button_UUID);
     public static UUID ledCharaUUID = UUID.fromString(Constants.LED_UUID);
-    public static UUID charaUUID1 = UUID.fromString(Constants.Chara1_UUID);
-    public static UUID charaUUID2 = UUID.fromString(Constants.Chara2_UUID);
+    public static UUID charaUUID1 = UUID.fromString(Constants.FW_UUID);
+    public static UUID charaUUID2 = UUID.fromString(Constants.REBOND_UUID);
 
     public static BluetoothGattService createFobService() {
         BluetoothGattService service = new BluetoothGattService(serviceUUID, BluetoothGattService.SERVICE_TYPE_PRIMARY);

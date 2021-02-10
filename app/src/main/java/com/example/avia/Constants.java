@@ -15,6 +15,6 @@ public class Constants {
 
     public  static  final String LED_UUID = "00001525-1312-EFDE-1523-785FEABCD123";
     public  static  final String Button_UUID = "00001524-1312-EFDE-1523-785FEABCD123";
-    public  static  final String Chara1_UUID = "00001526-1312-EFDE-1523-785FEABCD123";
-    public  static  final String Chara2_UUID = "00001523-1312-EFDE-1523-785FEABCD123";
+    public  static  final String FW_UUID = "00001526-1312-EFDE-1523-785FEABCD123";
+    public  static  final String REBOND_UUID = "00001530-1312-EFDE-1523-785FEABCD123";
 }
