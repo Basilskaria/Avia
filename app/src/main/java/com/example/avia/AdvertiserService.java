@@ -4,6 +4,7 @@ import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattServer;
@@ -23,6 +24,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -31,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 public class AdvertiserService extends Service {
     private static final String TAG = AdvertiserService.class.getSimpleName();
     private BluetoothLeAdvertiser mBluetoothLeAdvertiser;
-    private BluetoothGattServer mBluetoothGattServer;
+
     private  BluetoothManager mBluetoothManager;
 
     public static boolean running = false;
@@ -113,7 +115,6 @@ public class AdvertiserService extends Service {
      * Starts BLE Advertising.
      */
     private void startAdvertising() {
-        // goForeground();
 
         Log.d(TAG, "Service: Starting Advertising");
 
@@ -124,7 +125,6 @@ public class AdvertiserService extends Service {
             mAdvertiseCallback = new FobAdvertiseCallback();
 
             if (mBluetoothLeAdvertiser != null) {
-                //mBluetoothLeAdvertiser.startAdvertising(settings, data, mAdvertiseCallback);
                 mBluetoothLeAdvertiser.startAdvertising(settings,data, scanResponse,mAdvertiseCallback);
             }
         }
@@ -135,8 +135,6 @@ public class AdvertiserService extends Service {
      * Stops BLE Advertising.
      */
     private void stopAdvertising() {
-        Log.d(TAG, "Service: Stopping Advertising");
-        stopGattServer();
         if (mBluetoothLeAdvertiser != null) {
             running = false;
             mBluetoothLeAdvertiser.stopAdvertising(mAdvertiseCallback);
@@ -144,156 +142,6 @@ public class AdvertiserService extends Service {
         }
     }
 
-    /**
-     * Start Gatt server.
-     */
-    private void  startGattServer() {
-        mBluetoothGattServer = mBluetoothManager.openGattServer(this, new BluetoothGattServerCallback() {
-            @Override
-            public void onConnectionStateChange(BluetoothDevice device, int status, int newState) {
-                if (newState == BluetoothProfile.STATE_CONNECTED) {
-                    Log.i(TAG, "BluetoothDevice CONNECTED: " + device);
-                    mHandler.removeCallbacks(timeoutRunnable);
-                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                    Log.i(TAG, "BluetoothDevice DISCONNECTED: " + device);
-                    //Remove device from any active subscriptions
-                    mRegisteredDevices.remove(device);
-                }
-                super.onConnectionStateChange(device, status, newState);
-            }
-
-            @Override
-            public void onCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset,
-                                                    BluetoothGattCharacteristic characteristic) {
-                if (FobService.buttonCharaUUID.equals(characteristic.getUuid())) {
-                    Log.i(TAG, "Read button chara");
-                } else if (FobService.ledCharaUUID.equals(characteristic.getUuid())) {
-                    Log.i(TAG, "Read led chara");
-                } else if (FobService.charaUUID1.equals(characteristic.getUuid())) {
-                    Log.i(TAG, "Read chara uuid 1");
-                } else if (FobService.charaUUID2.equals(characteristic.getUuid())) {
-                    Log.i(TAG, "Read chara uuid 2");
-                } else {
-                    // Invalid characteristic
-                    Log.w(TAG, "Invalid Characteristic Read: " + characteristic.getUuid());
-                    mBluetoothGattServer.sendResponse(device,
-                            requestId,
-                            BluetoothGatt.GATT_FAILURE,
-                            0,
-                            null);
-                }
-                byte[] data = {0x02};
-                mBluetoothGattServer.sendResponse(device,requestId,BluetoothGatt.GATT_SUCCESS,offset,data);
-                super.onCharacteristicReadRequest(device,requestId,offset,characteristic);
-            }
-
-            @Override
-            public void onCharacteristicWriteRequest(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
-                if (FobService.buttonCharaUUID.equals(characteristic.getUuid())) {
-                    Log.i(TAG, "Write button chara");
-                } else if (FobService.ledCharaUUID.equals(characteristic.getUuid())) {
-                    Log.i(TAG, "Write led chara");
-                } else if (FobService.charaUUID1.equals(characteristic.getUuid())) {
-                    Log.i(TAG, "Write chara uuid 1");
-                } else if (FobService.charaUUID2.equals(characteristic.getUuid())) {
-                    Log.i(TAG, "Write chara uuid 2");
-                } else {
-                    // Invalid characteristic
-                    Log.w(TAG, "Invalid Characteristic Read: " + characteristic.getUuid());
-                    mBluetoothGattServer.sendResponse(device,
-                            requestId,
-                            BluetoothGatt.GATT_FAILURE,
-                            0,
-                            null);
-                }
-                byte[] data = {0x01,0x02};
-                mBluetoothGattServer.sendResponse(device,requestId,BluetoothGatt.GATT_SUCCESS,offset,data);
-                super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value);
-            }
-
-            @Override
-            public void onNotificationSent(BluetoothDevice device, int status) {
-                Log.i(TAG, "Got notification");
-
-                super.onNotificationSent(device, status);
-            }
-
-            @Override
-            public void onDescriptorReadRequest(BluetoothDevice device, int requestId, int offset,
-                                                BluetoothGattDescriptor descriptor) {
-                if (FobService.CLIENT_CONFIG.equals(descriptor.getUuid())) {
-                    Log.d(TAG, "Config descriptor read");
-                    byte[] returnValue;
-                    if (mRegisteredDevices.contains(device)) {
-                        returnValue = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE;
-                    } else {
-                        returnValue = BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE;
-                    }
-                    mBluetoothGattServer.sendResponse(device,
-                            requestId,
-                            BluetoothGatt.GATT_FAILURE,
-                            0,
-                            returnValue);
-                } else {
-                    Log.w(TAG, "Unknown descriptor read request");
-                    mBluetoothGattServer.sendResponse(device,
-                            requestId,
-                            BluetoothGatt.GATT_FAILURE,
-                            0,
-                            null);
-                }
-                byte[] data = {0x01,0x02};
-                mBluetoothGattServer.sendResponse(device,requestId,BluetoothGatt.GATT_SUCCESS,offset,data);
-
-                super.onDescriptorReadRequest(device, requestId, offset, descriptor);
-            }
-
-            @Override
-            public void onDescriptorWriteRequest(BluetoothDevice device, int requestId,
-                                                 BluetoothGattDescriptor descriptor,
-                                                 boolean preparedWrite, boolean responseNeeded,
-                                                 int offset, byte[] value) {
-                if (FobService.CLIENT_CONFIG.equals(descriptor.getUuid())) {
-                    if (Arrays.equals(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE, value)) {
-                        Log.d(TAG, "Subscribe device to notifications: " + device);
-                        mRegisteredDevices.add(device);
-                    } else if (Arrays.equals(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE, value)) {
-                        Log.d(TAG, "Unsubscribe device from notifications: " + device);
-                        mRegisteredDevices.remove(device);
-                    }
-
-                    if (responseNeeded) {
-                        mBluetoothGattServer.sendResponse(device,
-                                requestId,
-                                BluetoothGatt.GATT_SUCCESS,
-                                0,
-                                null);
-                    }
-                } else {
-                    Log.w(TAG, "Unknown descriptor write request");
-                    if (responseNeeded) {
-                        mBluetoothGattServer.sendResponse(device,
-                                requestId,
-                                BluetoothGatt.GATT_FAILURE,
-                                0,
-                                null);
-                    }
-                }
-                super.onDescriptorWriteRequest(device, requestId, descriptor, preparedWrite,responseNeeded, offset, value);
-            }
-        });
-
-        mBluetoothGattServer.addService(FobService.createFobService());
-    }
-
-    /**
-     * Stop Gatt server.
-     */
-    private void  stopGattServer() {
-        if (mBluetoothGattServer == null) return;
-
-        mBluetoothGattServer.close();
-    }
 
     /**
      * Returns an AdvertiseData object which includes the Service UUID and Device Name.
@@ -340,6 +188,7 @@ public class AdvertiserService extends Service {
         return scanResponse.build();
     }
 
+
     /**
      * Builds and sends a broadcast intent indicating Advertising has failed. Includes the error
      * code as an extra. This is intended to be picked up by the {@code AdvertiserFragment}.
@@ -352,6 +201,17 @@ public class AdvertiserService extends Service {
     }
 
     /**
+     * Builds and sends a broadcast intent indicating Advertising has failed. Includes the error
+     * code as an extra. This is intended to be picked up by the {@code AdvertiserFragment}.
+     */
+    private void sendSuccessIntent(){
+        Intent successIntent = new Intent();
+        successIntent.setAction(Constants.ADVERTISING_SUCCESS);
+        sendBroadcast(successIntent);
+    }
+
+
+    /**
      * Custom callback after Advertising succeeds or fails to start. Broadcasts the error code
      * in an Intent to be picked up by AdvertiserFragment and stops this Service.
      */
@@ -360,7 +220,6 @@ public class AdvertiserService extends Service {
         @Override
         public void onStartFailure(int errorCode) {
             super.onStartFailure(errorCode);
-            Log.d(TAG, "Advertising failed");
             sendFailureIntent(errorCode);
             stopSelf();
         }
@@ -368,8 +227,7 @@ public class AdvertiserService extends Service {
         @Override
         public void onStartSuccess(AdvertiseSettings settingsInEffect) {
             super.onStartSuccess(settingsInEffect);
-            startGattServer();
-            Log.d(TAG, "Advertising successfully started");
+            sendSuccessIntent();
         }
     }
 }

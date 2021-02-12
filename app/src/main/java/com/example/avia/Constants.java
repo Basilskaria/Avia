@@ -6,6 +6,9 @@ public class Constants {
     public static  final int REQUEST_ENABLE_BT = 1;
     public static final String ADVERTISING_FAILED =
             "com.example.android.bluetoothadvertisements.advertising_failed";
+    public static final String ADVERTISING_SUCCESS =
+            "com.example.android.bluetoothadvertisements.advertising_success";
+
     public static final String ADVERTISING_FAILED_EXTRA_CODE = "failureCode";
     public static final int ADVERTISING_TIMED_OUT = 60000;
 
@@ -15,6 +18,9 @@ public class Constants {
 
     public  static  final String LED_UUID = "00001525-1312-EFDE-1523-785FEABCD123";
     public  static  final String Button_UUID = "00001524-1312-EFDE-1523-785FEABCD123";
-    public  static  final String FW_UUID = "00001526-1312-EFDE-1523-785FEABCD123";
-    public  static  final String REBOND_UUID = "00001530-1312-EFDE-1523-785FEABCD123";
+    public  static  final String FWV_UUID = "00001526-1312-EFDE-1523-785FEABCD123";
+    public  static  final String Rebond_UUID = "00001530-1312-EFDE-1523-785FEABCD123";
+
+    public  static  final  int firmwareVersion = 1000000;
+    public  static  final  String LockName = "Avia Doorlock";
 }

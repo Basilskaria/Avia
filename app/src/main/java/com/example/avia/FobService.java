@@ -15,8 +15,8 @@ public class FobService {
     public static UUID serviceUUID = UUID.fromString(Constants.Fob_Service_UUID);
     public static UUID buttonCharaUUID = UUID.fromString(Constants.Button_UUID);
     public static UUID ledCharaUUID = UUID.fromString(Constants.LED_UUID);
-    public static UUID charaUUID1 = UUID.fromString(Constants.FW_UUID);
-    public static UUID charaUUID2 = UUID.fromString(Constants.REBOND_UUID);
+    public static UUID FWVUUID1 = UUID.fromString(Constants.FWV_UUID);
+    public static UUID RebondUUID2 = UUID.fromString(Constants.Rebond_UUID);
 
     public static BluetoothGattService createFobService() {
         BluetoothGattService service = new BluetoothGattService(serviceUUID, BluetoothGattService.SERVICE_TYPE_PRIMARY);
@@ -34,16 +34,26 @@ public class FobService {
                 BluetoothGattCharacteristic.PERMISSION_READ|BluetoothGattCharacteristic.PERMISSION_WRITE);
         service.addCharacteristic(ledChar);
 
-        BluetoothGattCharacteristic char1 = new BluetoothGattCharacteristic(charaUUID1,
+        BluetoothGattCharacteristic fwvCharacteristic = new BluetoothGattCharacteristic(FWVUUID1,
                 BluetoothGattCharacteristic.PROPERTY_READ ,
                 BluetoothGattCharacteristic.PERMISSION_READ);
-        service.addCharacteristic(char1);
+        service.addCharacteristic(fwvCharacteristic);
 
-        BluetoothGattCharacteristic char2 = new BluetoothGattCharacteristic(charaUUID2,
+        BluetoothGattCharacteristic rebondCharacteristic = new BluetoothGattCharacteristic(RebondUUID2,
                 BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_WRITE,
                 BluetoothGattCharacteristic.PERMISSION_READ|BluetoothGattCharacteristic.PERMISSION_WRITE);
-        service.addCharacteristic(char2);
+        service.addCharacteristic(rebondCharacteristic);
 
         return service;
+    }
+
+    public static byte[] firmwareVersion() {
+        int i = Constants.firmwareVersion;
+        byte[] result = new byte[4];
+        result[0] = (byte) (i >> 24);
+        result[1] = (byte) (i >> 16);
+        result[2] = (byte) (i >> 8);
+        result[3] = (byte) (i);
+        return  result;
     }
 }
