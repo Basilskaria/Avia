@@ -50,10 +50,10 @@ public class FobService {
     public static byte[] firmwareVersion() {
         int i = Constants.firmwareVersion;
         byte[] result = new byte[4];
-        result[0] = (byte) (i >> 24);
-        result[1] = (byte) (i >> 16);
-        result[2] = (byte) (i >> 8);
-        result[3] = (byte) (i);
+        result[0] = (byte) (i);
+        result[1] = (byte) (i >> 8);
+        result[2] = (byte) (i >> 16);
+        result[3] = (byte) (i >> 24);
         return  result;
     }
 }

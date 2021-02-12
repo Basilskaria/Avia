@@ -21,6 +21,6 @@ public class Constants {
     public  static  final String FWV_UUID = "00001526-1312-EFDE-1523-785FEABCD123";
     public  static  final String Rebond_UUID = "00001530-1312-EFDE-1523-785FEABCD123";
 
-    public  static  final  int firmwareVersion = 1000000;
+    public  static  final  int firmwareVersion = 1010000;
     public  static  final  String LockName = "Avia Doorlock";
 }
