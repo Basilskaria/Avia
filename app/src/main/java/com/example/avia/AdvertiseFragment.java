@@ -41,6 +41,8 @@ import java.security.PrivateKey;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class AdvertiseFragment extends Fragment implements View.OnClickListener {
 
@@ -86,9 +88,22 @@ public class AdvertiseFragment extends Fragment implements View.OnClickListener 
      */
     private BluetoothManager mBluetoothManager;
 
+    /**
+     * Booolean variable to check if Gatt server is initialised
+     */
     private  Boolean isGattServerInitialised = false;
 
+    /**
+     * MediaPlayer
+     */
     private MediaPlayer mediaPlayer;
+
+    /**
+     * Timer
+     */
+    private Timer animationTimer;
+
+    private Boolean isShowingImageWithSpikes = true;
 
 
     /**
@@ -136,6 +151,8 @@ public class AdvertiseFragment extends Fragment implements View.OnClickListener 
                 int errorCode = intent.getIntExtra(Constants.ADVERTISING_FAILED_EXTRA_CODE, -1);
 
                 String errorMessage = getString(R.string.start_error_prefix);
+
+                stopAnimatingFob();
 
                 switch (errorCode) {
                     case AdvertiseCallback.ADVERTISE_FAILED_ALREADY_STARTED:
@@ -209,6 +226,8 @@ public class AdvertiseFragment extends Fragment implements View.OnClickListener 
                 Log.i(TAG, "Unlock button");
                 unlockDoorLock();
                 startHapticFeedback();
+                startAnimatingFob();
+
                 break;
             case R.id.deletePairing:
                 showUnpairConfirmation();
@@ -261,7 +280,6 @@ public class AdvertiseFragment extends Fragment implements View.OnClickListener 
             }
         }
 
-
         if (pairedDevice  != null ){
             pairButton.setVisibility(View.GONE);
             unlockButton.setVisibility(View.VISIBLE);
@@ -287,6 +305,7 @@ public class AdvertiseFragment extends Fragment implements View.OnClickListener 
     private void startAdvertising() {
         Context c = getActivity();
         c.startService(getServiceIntent(c));
+        startAnimatingFob();
     }
 
     /**
@@ -296,6 +315,7 @@ public class AdvertiseFragment extends Fragment implements View.OnClickListener 
         Context c = getActivity();
         c.stopService(getServiceIntent(c));
         updateUI(false);
+        stopAnimatingFob();
     }
 
     private void startHapticFeedback() {
@@ -361,6 +381,7 @@ public class AdvertiseFragment extends Fragment implements View.OnClickListener 
                                     @Override
                                     public void run() {
                                         updateUI(false);
+                                        stopAdvertising();
                                     }
                                 });
                             }
@@ -397,6 +418,7 @@ public class AdvertiseFragment extends Fragment implements View.OnClickListener 
                         if (FobService.ledCharaUUID.equals(characteristic.getUuid())){
                             startHapticFeedback();
                             playNotificationSound();
+                            stopAnimatingFob();
                         }
                         super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value);
                     }
@@ -477,8 +499,8 @@ public class AdvertiseFragment extends Fragment implements View.OnClickListener 
     private void showUnpairConfirmation() {
 
         new AlertDialog.Builder(getContext())
-                .setTitle("Unpair your phone?")
-                .setMessage("Are you sure you want to unpair your phone from the lock?")
+                .setTitle("Un-pair your phone?")
+                .setMessage("Un-pairing from android app will not remove the pairing information from your Lock. After un-pairing please remove the fob information from Lock using Avia iOS app. Do you want to proceed?")
 
                 // Specifying a listener allows you to take an action before dismissing the dialog.
                 // The dialog is automatically dismissed when a dialog button is clicked.
@@ -491,7 +513,6 @@ public class AdvertiseFragment extends Fragment implements View.OnClickListener 
 
                 // A null listener allows the button to dismiss the dialog and take no further action.
                 .setPositiveButton(android.R.string.no, null)
-                .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
     }
 
@@ -524,6 +545,31 @@ public class AdvertiseFragment extends Fragment implements View.OnClickListener 
             Log.i(TAG, "notify chara");
             mBluetoothGattServer.notifyCharacteristicChanged(pairedDevice,btnChara,false);
         }
+    }
+
+    private  void startAnimatingFob() {
+
+        animationTimer = new Timer();
+        animationTimer.schedule(new TimerTask() {
+
+            @Override
+            public void run() {
+                if (isShowingImageWithSpikes)  {
+                    isShowingImageWithSpikes = false;
+                    fobImage.setImageResource(R.drawable.fobimgwithoutflash);
+                } else  {
+                    isShowingImageWithSpikes = true;
+                    fobImage.setImageResource(R.drawable.fobimg);
+                }
+            }
+
+        },0,200);//Update text every second
+    }
+
+    private  void  stopAnimatingFob() {
+        animationTimer.cancel();
+        isShowingImageWithSpikes = true;
+        fobImage.setImageResource(R.drawable.fobimg);
     }
 
 
