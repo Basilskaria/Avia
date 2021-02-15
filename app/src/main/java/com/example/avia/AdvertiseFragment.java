@@ -13,6 +13,7 @@ import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.AdvertiseCallback;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -32,6 +33,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import java.lang.reflect.Method;
@@ -209,7 +211,7 @@ public class AdvertiseFragment extends Fragment implements View.OnClickListener 
                 startHapticFeedback();
                 break;
             case R.id.deletePairing:
-                unpairDevice();
+                showUnpairConfirmation();
                 break;
             case R.id.fobImg:
                 Log.d(TAG, "Clicked on image view");
@@ -467,6 +469,30 @@ public class AdvertiseFragment extends Fragment implements View.OnClickListener 
         String lockName = sharedPreferences.getString(Constants.LockName, "");
         Log.i(TAG, lockName);
         return  lockName;
+    }
+
+    /**
+     * Show unpair confirmation
+     */
+    private void showUnpairConfirmation() {
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("Unpair your phone?")
+                .setMessage("Are you sure you want to unpair your phone from the lock?")
+
+                // Specifying a listener allows you to take an action before dismissing the dialog.
+                // The dialog is automatically dismissed when a dialog button is clicked.
+                .setNegativeButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Continue with delete operation
+                        unpairDevice();
+                    }
+                })
+
+                // A null listener allows the button to dismiss the dialog and take no further action.
+                .setPositiveButton(android.R.string.no, null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 
     /**
